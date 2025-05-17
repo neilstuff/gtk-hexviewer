@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <object class="GtkWindow" id="main">
+    <property name="default-width">600</property>
+    <property name="default-height">400</property>
+    <property name="visible">true</property>
+    <property name="title" translatable="1">Hex Viewer</property>
+    <child>
+      <object class="GtkGrid">
+        <child>
+          <object class="GtkBox" id="vbox1">
+            <layout>
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="row-span">1</property>
+              <property name="column-span">4</property>
+            </layout>
+            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+            <property name="hexpand">1</property>
+            <child>
+              <object class="GtkButton" id="openToolbarButton">
+                <property name="has_frame">false</property>
+                <property name="icon-name">document-open</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="aboutToolbarItem">
+                <property name="has_frame">false</property>
+                <property name="icon-name">help-about</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+            <property name="vexpand">1</property>
+            <property name="hexpand">1</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="row-span">1</property>
+              <property name="column-span">1</property>
+            </layout>
+
+            <child>
+              <object class="GtkScrolledWindow" id="scrolledWindow">
+                <property name="visible">true</property>
+                <property name="has_frame">true</property>
+                <property name="vexpand">1</property>
+                <property name="hexpand">1</property>
+                <property name="margin_start">14</property>
+                <property name="margin_end">14</property>
+                <property name="hscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
+                <property name="vscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
+                <child>
+                  <object class="GtkViewport" id="viewport">
+                    <property name="visible">true</property>
+                    <child>
+                      <object class="GtkColumnView" id="hexViewer">
+  \                   </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="statusBar">
+            <property name="hexpand">1</property>
+            <property name="margin_top">2</property>
+            <property name="margin_bottom">2</property>
+            <property name="label">Hex Viewer - V0.0.1 - The Sour Orange</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">2</property>
+              <property name="row-span">1</property>
+              <property name="column-span">4</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
