@@ -16,16 +16,12 @@ import org.gnome.gtk.Button;
 import org.gnome.gtk.ColumnView;
 import org.gnome.gtk.ColumnViewColumn;
 import org.gnome.gtk.FileDialog;
-import org.gnome.gtk.Gtk;
 import org.gnome.gtk.GtkBuilder;
 import org.gnome.gtk.Inscription;
 import org.gnome.gtk.ListItem;
 import org.gnome.gtk.NoSelection;
 import org.gnome.gtk.SignalListItemFactory;
 import org.gnome.gtk.Window;
-import org.gnome.gdk.Cursor;
-import org.gnome.gdk.Display;
-import org.gnome.gtk.CssProvider;
 
 import io.github.jwharm.javagi.base.GErrorException;
 import io.github.jwharm.javagi.base.Out;
@@ -108,7 +104,9 @@ public class HexViewer {
                 var listitem = (ListItem) item;
                 var inscription = (Inscription) listitem.getChild();
                 var row = (Row) listitem.getItem();
-                inscription.setText(row.getValue(hexColumn));
+                if (inscription != null) {
+                    inscription.setText(row.getValue(hexColumn));
+                }
             });
 
             var column = new ColumnViewColumn(HEX_CHARS[iColumn] + "", columnFactory);
@@ -156,6 +154,7 @@ public class HexViewer {
             String asciiValues = (values.get(1)).toString();
 
             store.append(new Row(hexValues, asciiValues));
+
         }
 
     }
@@ -172,11 +171,9 @@ public class HexViewer {
                 return;
             }
         
-            var cursor = columnView.getCursor();
             // Load the contents of the selected file.
             try {
                
-                columnView.setCursor(Cursor.fromName("wait", null));
 
                 store.removeAll();
 
@@ -196,7 +193,7 @@ public class HexViewer {
                         .show(this.window);
             }
 
-            columnView.setCursor(cursor);
+            window.setCursorFromName("default");
         });
     }
 

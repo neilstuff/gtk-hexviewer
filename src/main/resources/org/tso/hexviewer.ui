@@ -74,7 +74,7 @@
               <property name="row">2</property>
               <property name="row-span">1</property>
               <property name="column-span">4</property>
-            </layout>
+             </layout>
           </object>
         </child>
       </object>
