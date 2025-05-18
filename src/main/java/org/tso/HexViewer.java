@@ -16,13 +16,16 @@ import org.gnome.gtk.Button;
 import org.gnome.gtk.ColumnView;
 import org.gnome.gtk.ColumnViewColumn;
 import org.gnome.gtk.FileDialog;
+import org.gnome.gtk.Gtk;
 import org.gnome.gtk.GtkBuilder;
 import org.gnome.gtk.Inscription;
 import org.gnome.gtk.ListItem;
 import org.gnome.gtk.NoSelection;
 import org.gnome.gtk.SignalListItemFactory;
-import org.gnome.gtk.SingleSelection;
 import org.gnome.gtk.Window;
+import org.gnome.gdk.Cursor;
+import org.gnome.gdk.Display;
+import org.gnome.gtk.CssProvider;
 
 import io.github.jwharm.javagi.base.GErrorException;
 import io.github.jwharm.javagi.base.Out;
@@ -35,6 +38,7 @@ public class HexViewer {
     Window window;
     private File file = null;
     ListStore<Row> store;
+    ColumnView columnView;
 
     public static final class Row extends GObject {
 
@@ -164,16 +168,15 @@ public class HexViewer {
             if (file == null) {
                 return;
             }
-
+        
+            var cursor = columnView.getCursor();
             // Load the contents of the selected file.
             try {
-
-                System.out.println("Removing all rows");
+               
+                columnView.setCursor(Cursor.fromName("wait", null));
 
                 store.removeAll();
 
-                // The byte[] parameter is an out-parameter in the C API.
-                // Create an empty Out<byte[]> object, and read its value afterward.
                 Out<byte[]> contents = new Out<>();
                 file.loadContents(null, contents, null);
 
@@ -189,6 +192,8 @@ public class HexViewer {
                         .build()
                         .show(this.window);
             }
+
+            columnView.setCursor(cursor);
         });
     }
 
@@ -209,9 +214,18 @@ public class HexViewer {
 
             var uiDefinition = output.toString("UTF-8");
 
-            System.out.println(uiDefinition);
-
             builder.addFromString(uiDefinition, uiDefinition.length());
+
+            CssProvider provider = new CssProvider();
+
+            provider.loadFromPath("src/main/resources/org/tso/hexviewer.css");
+
+            Gtk.styleContextAddProviderForDisplay(
+                Display.getDefault(),
+                provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            );
+
 
             window = (Window) builder.getObject("main");
 
@@ -219,7 +233,7 @@ public class HexViewer {
 
             openToolbarButton.onClicked(this::open);
 
-            var columnView = (ColumnView) builder.getObject("hexViewer");
+            columnView = (ColumnView) builder.getObject("hexViewer");
 
             columnView.setShowColumnSeparators(true);
 
