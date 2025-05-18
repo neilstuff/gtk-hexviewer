@@ -19,6 +19,7 @@ import org.gnome.gtk.FileDialog;
 import org.gnome.gtk.GtkBuilder;
 import org.gnome.gtk.Inscription;
 import org.gnome.gtk.ListItem;
+import org.gnome.gtk.NoSelection;
 import org.gnome.gtk.SignalListItemFactory;
 import org.gnome.gtk.SingleSelection;
 import org.gnome.gtk.Window;
@@ -169,7 +170,7 @@ public class HexViewer {
 
                 System.out.println("Removing all rows");
 
-                HexViewer.this.store.removeAll();
+                store.removeAll();
 
                 // The byte[] parameter is an out-parameter in the C API.
                 // Create an empty Out<byte[]> object, and read its value afterward.
@@ -219,12 +220,14 @@ public class HexViewer {
             openToolbarButton.onClicked(this::open);
 
             var columnView = (ColumnView) builder.getObject("hexViewer");
-            
+
+            columnView.setShowColumnSeparators(true);
+
             store = new ListStore<>(Row.gtype);
 
             setupColumns(columnView);
             
-            columnView.setModel(new SingleSelection<Row>(store));
+            columnView.setModel(new NoSelection<Row>(store));
 
             window.setApplication(app);
 
