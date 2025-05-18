@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <object class="GtkWindow" id="main">
-    <property name="default-width">600</property>
+    <property name="default-width">650</property>
     <property name="default-height">400</property>
     <property name="visible">true</property>
     <property name="title" translatable="1">Hex Viewer</property>
@@ -53,13 +53,9 @@
                 <property name="margin_end">14</property>
                 <property name="hscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
                 <property name="vscrollbar-policy">GTK_POLICY_AUTOMATIC</property>
+                <property name="visible">true</property>
                 <child>
-                  <object class="GtkViewport" id="viewport">
-                    <property name="visible">true</property>
-                    <child>
-                      <object class="GtkColumnView" id="hexViewer">
-  \                   </object>
-                    </child>
+                  <object class="GtkColumnView" id="hexViewer">
                   </object>
                 </child>
               </object>

@@ -46,8 +46,6 @@ public class HexViewer {
             this.hexValues = hexValues;
             this.asciiValues = asciiValues;
 
-            System.out.println(this.asciiValues);
-
         }
 
         public String getValue(int iHex) {
@@ -171,7 +169,7 @@ public class HexViewer {
 
                 System.out.println("Removing all rows");
 
-                store.removeAll();
+                HexViewer.this.store.removeAll();
 
                 // The byte[] parameter is an out-parameter in the C API.
                 // Create an empty Out<byte[]> object, and read its value afterward.
@@ -222,6 +220,8 @@ public class HexViewer {
 
             var columnView = (ColumnView) builder.getObject("hexViewer");
             
+            store = new ListStore<>(Row.gtype);
+
             setupColumns(columnView);
             
             columnView.setModel(new SingleSelection<Row>(store));
