@@ -131,8 +131,11 @@ public class HexViewer {
         columnFactory.onBind(item -> {
             var listitem = (ListItem) item;
             var inscription = (Inscription) listitem.getChild();
-            var row = (Row) listitem.getItem();
-            inscription.setText(row.asciiValues);
+
+            if (inscription != null) {
+                var row = (Row) listitem.getItem();
+                inscription.setText(row.asciiValues);
+            }
         });
 
         var column = new ColumnViewColumn("", columnFactory);
@@ -216,17 +219,6 @@ public class HexViewer {
 
             builder.addFromString(uiDefinition, uiDefinition.length());
 
-            CssProvider provider = new CssProvider();
-
-            provider.loadFromPath("src/main/resources/org/tso/hexviewer.css");
-
-            Gtk.styleContextAddProviderForDisplay(
-                Display.getDefault(),
-                provider,
-                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-            );
-
-
             window = (Window) builder.getObject("main");
 
             var openToolbarButton = (Button) builder.getObject("openToolbarButton");
@@ -234,6 +226,7 @@ public class HexViewer {
             openToolbarButton.onClicked(this::open);
 
             columnView = (ColumnView) builder.getObject("hexViewer");
+            columnView.addCssClass("monospace");
 
             columnView.setShowColumnSeparators(true);
 
