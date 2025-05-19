@@ -147,14 +147,28 @@ public class HexViewer {
         var row = new byte[16];
 
         ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
+        int read = 0;
 
-        for (stream.read(row); stream.available() > 0; stream.read(row)) {
+        for (stream.read(row); (read = stream.available()) > 0; stream.read(row)) {
             ArrayList<Object> values = asHex(row);
             String[] hexValues = (String[]) (values.get(0));
             String asciiValues = (values.get(1)).toString();
 
             store.append(new Row(hexValues, asciiValues));
 
+        }
+
+        if (read > 0) {
+            byte[] dest = new byte[read];
+
+            System.arraycopy(row, 0, dest, 0, read);
+
+            ArrayList<Object> values = asHex(row);
+
+            String[] hexValues = (String[]) (values.get(0));
+            String asciiValues = (values.get(1)).toString();
+            store.append(new Row(hexValues, asciiValues));
+            
         }
 
     }
