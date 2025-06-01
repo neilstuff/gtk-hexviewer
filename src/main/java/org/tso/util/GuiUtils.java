@@ -9,6 +9,7 @@ import org.gnome.gtk.ListItem;
 import org.gnome.gtk.SignalListItemFactory;
 
 public class GuiUtils {
+
     private static final char[] HEX_CHARS = "0123456789ABCDEF".toCharArray();
 
     static final public String getDefintion(String definition) throws Exception {
@@ -27,19 +28,19 @@ public class GuiUtils {
 
     }
 
-    static final public ArrayList<Object> asHex(byte[] buf) {
+    static final public ArrayList<Object> asHex(byte[] buf, int read) {
 
         var values = new ArrayList<Object>(2);
 
         StringBuffer asciiChars = new StringBuffer();
 
-        String[] hex = new String[16];
+        String[] hex = new String[buf.length];
 
-        for (int iHex = 0; iHex < hex.length; iHex++) {
+        for (int iHex = 0; iHex < buf.length; iHex++) {
             hex[iHex] = "";
         }
 
-        for (int i = 0, c = 0; i < buf.length; i++, c++) {
+        for (int i = 0, c = 0; i < read; i++, c++) {
             char[] chars = new char[2];
 
             chars[0] = HEX_CHARS[(buf[i] & 0xF0) >>> 4];
@@ -57,7 +58,7 @@ public class GuiUtils {
         return values;
     }
 
-     static final public SignalListItemFactory createSignalListItemFactory() {
+    static final public SignalListItemFactory createSignalListItemFactory() {
 
         var columnFactory = new SignalListItemFactory();
 

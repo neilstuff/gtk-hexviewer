@@ -19,6 +19,7 @@ import org.gnome.gtk.Inscription;
 import org.gnome.gtk.ListItem;
 import org.gnome.gtk.NoSelection;
 import org.gnome.gtk.SignalListItemFactory;
+import org.gnome.gtk.Spinner;
 import org.gnome.gtk.Window;
 import org.tso.util.GuiUtils;
 
@@ -31,10 +32,9 @@ public class HexViewer {
     private static final char[] HEX_CHARS = "0123456789ABCDEF".toCharArray();
 
     Window window;
-    private File file = null;
-    ListStore<Row> store;
     ColumnView columnView;
     AboutDialog aboutDialog;
+    Spinner waitSpinner;
 
     public static final class Row extends GObject {
 
@@ -52,36 +52,54 @@ public class HexViewer {
         public String getValue(int iHex) {
             return this.hexValues[iHex];
         }
+
     }
 
-    ArrayList<Object> asHex(byte[] buf, int read) {
+    class Load implements Runnable {
+        ListStore<Row> store;
+        File file;
+    
+        Load(File file) {
+            
+            this.file = file;
+            this.store = new ListStore<>(Row.gtype);
+   
+        }
+        
+        void createRows(ListStore<Row> store, byte[] bytes) throws Exception {
+            var row = new byte[16];
+            
+            this.store = new ListStore<>(Row.gtype);
+            ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
+            int read;
 
-        var values = new ArrayList<Object>(2);
+            for (stream.read(row); (read = stream.available()) > 0; stream.read(row)) {
+                ArrayList<Object> values = GuiUtils.asHex(row, read < row.length ? read : row.length);
+                String[] hexValues = (String[]) (values.get(0));
+                String asciiValues = (values.get(1)).toString();
 
-        StringBuffer asciiChars = new StringBuffer();
+                this.store.append(new Row(hexValues, asciiValues));
 
-        String[] hex = new String[buf.length];
-
-        for (int iHex = 0; iHex < buf.length; iHex++) {
-            hex[iHex] = "";
+            }
+            
         }
 
-        for (int i = 0, c = 0; i < read; i++, c++) {
-            char[] chars = new char[2];
+        @Override
+        public void run() {
+            try {
+        
+                Out<byte[]> contents = new Out<>();
+                this.file.loadContents(null, contents, null);
 
-            chars[0] = HEX_CHARS[(buf[i] & 0xF0) >>> 4];
-            chars[1] = HEX_CHARS[buf[i] & 0x0F];
+                byte[] bytes = contents.get();
 
-            hex[c] = new String(chars);
+                createRows(this.store, bytes);
 
-            asciiChars.append(Character.isLetterOrDigit(buf[i]) ? (char) buf[i] : '.');
-
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
         }
 
-        values.add(hex);
-        values.add(asciiChars);
-
-        return values;
     }
 
     void about() {
@@ -147,27 +165,14 @@ public class HexViewer {
 
     }
 
-    void createRows(ListStore<Row> store, byte[] bytes) throws Exception {
-        var row = new byte[16];
-
-        ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
-        int read = 0;
-
-        for (stream.read(row); (read = stream.available()) > 0; stream.read(row)) {
-            ArrayList<Object> values = asHex(row, read < row.length ? read : row.length);
-            String[] hexValues = (String[]) (values.get(0));
-            String asciiValues = (values.get(1)).toString();
-
-            store.append(new Row(hexValues, asciiValues));
-
-        }
-
-    }
-
     void open() {
         FileDialog dialog = new FileDialog();
+        
+
 
         dialog.open(this.window, null, (_, result, _) -> {
+            File file = null;
+
             try {
                 file = dialog.openFinish(result);
             } catch (GErrorException ignored) {
@@ -178,16 +183,16 @@ public class HexViewer {
         
             // Load the contents of the selected file.
             try {
-               
+                Load load = new Load(file);
 
-                store.removeAll();
+                Thread loader = new Thread(load);
+                loader.start();
 
-                Out<byte[]> contents = new Out<>();
-                file.loadContents(null, contents, null);
+                while (loader.isAlive()) {
+                    loader.join(1);
+                }
 
-                byte[] bytes = contents.get();
-
-                createRows(store, bytes);
+                columnView.setModel(new NoSelection<Row>(load.store));
 
             } catch (Exception e) {
                 AlertDialog.builder()
@@ -199,6 +204,7 @@ public class HexViewer {
             }
 
             window.setCursorFromName("default");
+
         });
     }
 
@@ -206,7 +212,6 @@ public class HexViewer {
         GtkBuilder builder = new GtkBuilder();
 
         try {
-
             var uiDefinition = GuiUtils.getDefintion("/org/tso/hexviewer.ui");
 
             builder.addFromString(uiDefinition, uiDefinition.length());
@@ -215,6 +220,8 @@ public class HexViewer {
 
             var openToolbarButton = (Button) builder.getObject("openToolbarButton");
             var aboutToolbarItem = (Button) builder.getObject("aboutToolbarItem");
+            
+            waitSpinner = (Spinner) builder.getObject("waitSpinner");
 
             openToolbarButton.onClicked(this::open);
             aboutToolbarItem.onClicked(this::about);
@@ -224,11 +231,7 @@ public class HexViewer {
 
             columnView.setShowColumnSeparators(true);
 
-            store = new ListStore<>(Row.gtype);
-
             setupColumns(columnView);
-            
-            columnView.setModel(new NoSelection<Row>(store));
 
             aboutDialog = new AboutDialog(window, "/org/tso/about-dialog.ui");
 

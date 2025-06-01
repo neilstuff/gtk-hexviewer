@@ -30,6 +30,11 @@
                 <property name="icon-name">help-about</property>
               </object>
             </child>
+             <child>
+              <object class="GtkSpinner" id="waitSpinner">
+                <property name="halign">end</property>
+              </object>
+            </child>
           </object>
         </child>
         <child>
