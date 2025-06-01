@@ -19,7 +19,6 @@ import org.gnome.gtk.Inscription;
 import org.gnome.gtk.ListItem;
 import org.gnome.gtk.NoSelection;
 import org.gnome.gtk.SignalListItemFactory;
-import org.gnome.gtk.Spinner;
 import org.gnome.gtk.Window;
 import org.tso.util.GuiUtils;
 
@@ -34,7 +33,6 @@ public class HexViewer {
     Window window;
     ColumnView columnView;
     AboutDialog aboutDialog;
-    Spinner waitSpinner;
 
     public static final class Row extends GObject {
 
@@ -220,8 +218,6 @@ public class HexViewer {
 
             var openToolbarButton = (Button) builder.getObject("openToolbarButton");
             var aboutToolbarItem = (Button) builder.getObject("aboutToolbarItem");
-            
-            waitSpinner = (Spinner) builder.getObject("waitSpinner");
 
             openToolbarButton.onClicked(this::open);
             aboutToolbarItem.onClicked(this::about);
