@@ -1,8 +1,6 @@
 package org.tso;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 
 import org.gnome.gio.ApplicationFlags;
@@ -22,6 +20,7 @@ import org.gnome.gtk.ListItem;
 import org.gnome.gtk.NoSelection;
 import org.gnome.gtk.SignalListItemFactory;
 import org.gnome.gtk.Window;
+import org.tso.util.GuiUtils;
 
 import io.github.jwharm.javagi.base.GErrorException;
 import io.github.jwharm.javagi.base.Out;
@@ -35,6 +34,7 @@ public class HexViewer {
     private File file = null;
     ListStore<Row> store;
     ColumnView columnView;
+    AboutDialog aboutDialog;
 
     public static final class Row extends GObject {
 
@@ -54,7 +54,7 @@ public class HexViewer {
         }
     }
 
-    ArrayList<Object> asHex(byte[] buf) {
+    ArrayList<Object> asHex(byte[] buf, int read) {
 
         var values = new ArrayList<Object>(2);
 
@@ -66,7 +66,7 @@ public class HexViewer {
             hex[iHex] = "";
         }
 
-        for (int i = 0, c = 0; i < buf.length; i++, c++) {
+        for (int i = 0, c = 0; i < read; i++, c++) {
             char[] chars = new char[2];
 
             chars[0] = HEX_CHARS[(buf[i] & 0xF0) >>> 4];
@@ -82,6 +82,10 @@ public class HexViewer {
         values.add(asciiChars);
 
         return values;
+    }
+
+    void about() {
+       aboutDialog.show();
     }
 
     void setupColumns(ColumnView columnview) {
@@ -150,25 +154,12 @@ public class HexViewer {
         int read = 0;
 
         for (stream.read(row); (read = stream.available()) > 0; stream.read(row)) {
-            ArrayList<Object> values = asHex(row);
+            ArrayList<Object> values = asHex(row, read < row.length ? read : row.length);
             String[] hexValues = (String[]) (values.get(0));
             String asciiValues = (values.get(1)).toString();
 
             store.append(new Row(hexValues, asciiValues));
 
-        }
-
-        if (read > 0) {
-            byte[] dest = new byte[read];
-
-            System.arraycopy(row, 0, dest, 0, read);
-
-            ArrayList<Object> values = asHex(row);
-
-            String[] hexValues = (String[]) (values.get(0));
-            String asciiValues = (values.get(1)).toString();
-            store.append(new Row(hexValues, asciiValues));
-            
         }
 
     }
@@ -215,26 +206,18 @@ public class HexViewer {
         GtkBuilder builder = new GtkBuilder();
 
         try {
-            InputStream inputStream = HexViewer.class.
-                    getResourceAsStream("/org/tso/hexviewer.ui");
 
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-
-            byte[] buffer = new byte[1024];
-
-            for (int length; (length = inputStream.read(buffer)) != -1;) {
-                output.write(buffer, 0, length);
-            }
-
-            var uiDefinition = output.toString("UTF-8");
+            var uiDefinition = GuiUtils.getDefintion("/org/tso/hexviewer.ui");
 
             builder.addFromString(uiDefinition, uiDefinition.length());
 
             window = (Window) builder.getObject("main");
 
             var openToolbarButton = (Button) builder.getObject("openToolbarButton");
+            var aboutToolbarItem = (Button) builder.getObject("aboutToolbarItem");
 
             openToolbarButton.onClicked(this::open);
+            aboutToolbarItem.onClicked(this::about);
 
             columnView = (ColumnView) builder.getObject("hexViewer");
             columnView.addCssClass("monospace");
@@ -246,6 +229,8 @@ public class HexViewer {
             setupColumns(columnView);
             
             columnView.setModel(new NoSelection<Row>(store));
+
+            aboutDialog = new AboutDialog(window, "/org/tso/about-dialog.ui");
 
             window.setApplication(app);
 
