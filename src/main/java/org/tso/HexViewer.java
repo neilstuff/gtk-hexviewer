@@ -1,6 +1,8 @@
 package org.tso;
 
 import java.io.ByteArrayInputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import org.gnome.gio.ApplicationFlags;
@@ -181,8 +183,10 @@ public class HexViewer {
         
             // Load the contents of the selected file.
             try {
+                Path path = Paths.get(file.getPath());
 
-                statusBar.setText(file.getPath());
+                statusBar.setText(path.getFileName().toString());
+
                 Load load = new Load(file);
 
                 Thread loader = new Thread(load);
