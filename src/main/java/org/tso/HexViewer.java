@@ -16,6 +16,7 @@ import org.gnome.gtk.ColumnViewColumn;
 import org.gnome.gtk.FileDialog;
 import org.gnome.gtk.GtkBuilder;
 import org.gnome.gtk.Inscription;
+import org.gnome.gtk.Label;
 import org.gnome.gtk.ListItem;
 import org.gnome.gtk.NoSelection;
 import org.gnome.gtk.SignalListItemFactory;
@@ -33,6 +34,7 @@ public class HexViewer {
     Window window;
     ColumnView columnView;
     AboutDialog aboutDialog;
+    Label statusBar;
 
     public static final class Row extends GObject {
 
@@ -166,8 +168,6 @@ public class HexViewer {
     void open() {
         FileDialog dialog = new FileDialog();
         
-
-
         dialog.open(this.window, null, (_, result, _) -> {
             File file = null;
 
@@ -181,13 +181,15 @@ public class HexViewer {
         
             // Load the contents of the selected file.
             try {
+
+                statusBar.setText(file.getPath());
                 Load load = new Load(file);
 
                 Thread loader = new Thread(load);
                 loader.start();
 
                 while (loader.isAlive()) {
-                    loader.join(1);
+                    loader.join(10);
                 }
 
                 columnView.setModel(new NoSelection<Row>(load.store));
@@ -215,6 +217,8 @@ public class HexViewer {
             builder.addFromString(uiDefinition, uiDefinition.length());
 
             window = (Window) builder.getObject("main");
+
+            statusBar = (Label) builder.getObject("statusBar");
 
             var openToolbarButton = (Button) builder.getObject("openToolbarButton");
             var aboutToolbarItem = (Button) builder.getObject("aboutToolbarItem");
