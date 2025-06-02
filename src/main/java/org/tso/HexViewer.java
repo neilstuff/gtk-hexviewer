@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import org.gnome.gio.ApplicationFlags;
 import org.gnome.gio.File;
 import org.gnome.gio.ListStore;
+import org.gnome.glib.GLib;
 import org.gnome.glib.Type;
 import org.gnome.gobject.GObject;
 import org.gnome.gtk.AlertDialog;
@@ -21,6 +22,7 @@ import org.gnome.gtk.Inscription;
 import org.gnome.gtk.Label;
 import org.gnome.gtk.ListItem;
 import org.gnome.gtk.NoSelection;
+import org.gnome.gtk.ProgressBar;
 import org.gnome.gtk.SignalListItemFactory;
 import org.gnome.gtk.Window;
 import org.tso.util.GuiUtils;
@@ -37,6 +39,9 @@ public class HexViewer {
     ColumnView columnView;
     AboutDialog aboutDialog;
     Label statusBar;
+    ProgressBar progressBar;
+    
+    Load load = null;
 
     public static final class Row extends GObject {
 
@@ -187,16 +192,26 @@ public class HexViewer {
 
                 statusBar.setText(path.getFileName().toString());
 
-                Load load = new Load(file);
+                load = new Load(file);
 
                 Thread loader = new Thread(load);
                 loader.start();
+                
+                progressBar.setVisible(true);     
+                progressBar.setFraction(0);  
 
-                while (loader.isAlive()) {
-                    loader.join(10);
-                }
+                GLib.timeoutAdd(GLib.PRIORITY_DEFAULT, 100, () -> {
 
-                columnView.setModel(new NoSelection<Row>(load.store));
+                    if (!loader.isAlive()) {
+                         columnView.setModel(new NoSelection<Row>(load.store));
+                         progressBar.setVisible(false);
+                    } else {
+                        progressBar.pulse();
+                    }
+
+                    return loader.isAlive();
+
+            });
 
             } catch (Exception e) {
                 AlertDialog.builder()
@@ -223,6 +238,7 @@ public class HexViewer {
             window = (Window) builder.getObject("main");
 
             statusBar = (Label) builder.getObject("statusBar");
+            progressBar = (ProgressBar) builder.getObject("progressBar");
 
             var openToolbarButton = (Button) builder.getObject("openToolbarButton");
             var aboutToolbarItem = (Button) builder.getObject("aboutToolbarItem");
@@ -242,7 +258,7 @@ public class HexViewer {
             window.setApplication(app);
 
             window.setVisible(true);
-
+                
         } catch (Exception e) {
 
             e.printStackTrace();

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <object class="GtkWindow" id="main">
-    <property name="default-width">720</property>
-    <property name="default-height">550</property>
+    <property name="default-width">730</property>
+    <property name="default-height">570</property>
     <property name="visible">true</property>
     <property name="resizable">false</property>
     <property name="title" translatable="1">Hex Viewer</property>
@@ -81,6 +81,14 @@
                 <property name="margin_bottom">2</property>
                 <property name="label"></property>
                 <property name="halign">GTK_ALIGN_START</property>
+              </object>
+            </child>
+           <child>
+              <object class="GtkProgressBar" id="progressBar">
+                <property name="margin_end">14</property>
+                <property name="margin_top">9</property>
+                <property name="margin_bottom">2</property>
+                <property name="visible">false</property>
               </object>
             </child>
           </object>
