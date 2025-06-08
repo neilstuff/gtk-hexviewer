@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <object class="GtkWindow" id="main">
-    <property name="default-width">730</property>
+    <property name="default-width">830</property>
     <property name="default-height">570</property>
     <property name="visible">true</property>
     <property name="resizable">false</property>

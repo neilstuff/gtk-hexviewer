@@ -46,11 +46,13 @@ public class HexViewer {
     public static final class Row extends GObject {
 
         public static Type gtype = Types.register(Row.class);
+        public String address;
         public String[] hexValues;
         public String asciiValues;
 
-        public Row(String[] hexValues, String asciiValues) {
+        public Row(int line, String[] hexValues, String asciiValues) {
 
+            this.address = String.format("%1$010X", line);
             this.hexValues = hexValues;
             this.asciiValues = asciiValues;
 
@@ -79,13 +81,16 @@ public class HexViewer {
             this.store = new ListStore<>(Row.gtype);
             ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
             int read;
+            int line = 0;
 
             for (stream.read(row); (read = stream.available()) > 0; stream.read(row)) {
                 ArrayList<Object> values = GuiUtils.asHex(row, read < row.length ? read : row.length);
                 String[] hexValues = (String[]) (values.get(0));
                 String asciiValues = (values.get(1)).toString();
 
-                this.store.append(new Row(hexValues, asciiValues));
+                this.store.append(new Row(line, hexValues, asciiValues));
+
+                line += row.length;
 
             }
             
@@ -114,9 +119,34 @@ public class HexViewer {
     }
 
     void setupColumns(ColumnView columnview) {
+        var columnFactory = new SignalListItemFactory();
+
+        columnFactory.onSetup(item -> {
+            var listitem = (ListItem) item;
+            var inscription = Inscription.builder()
+                    .setXalign(0)
+                    .build();
+            listitem.setChild(inscription);
+
+        });
+
+        columnFactory.onBind(item -> {
+            var listitem = (ListItem) item;
+            var inscription = (Inscription) listitem.getChild();
+
+            if (inscription != null) {
+                var row = (Row) listitem.getItem();
+                inscription.setText(row.address);
+            }
+        });
+
+        var column = new ColumnViewColumn("", columnFactory);
+
+        column.setFixedWidth(100);
+        columnview.appendColumn(column);
 
         for (int iColumn = 0; iColumn < HEX_CHARS.length; iColumn++) {
-            var columnFactory = new SignalListItemFactory();
+            columnFactory = new SignalListItemFactory();
 
             columnFactory.onSetup(item -> {
                 var listitem = (ListItem) item;
@@ -138,13 +168,13 @@ public class HexViewer {
                 }
             });
 
-            var column = new ColumnViewColumn(HEX_CHARS[iColumn] + "", columnFactory);
+            column = new ColumnViewColumn(HEX_CHARS[iColumn] + "", columnFactory);
 
             columnview.appendColumn(column);
 
         }
 
-        var columnFactory = new SignalListItemFactory();
+        columnFactory = new SignalListItemFactory();
 
         columnFactory.onSetup(item -> {
             var listitem = (ListItem) item;
@@ -165,7 +195,8 @@ public class HexViewer {
             }
         });
 
-        var column = new ColumnViewColumn("", columnFactory);
+        column = new ColumnViewColumn("", columnFactory);
+        
         column.setExpand(true);
 
         columnview.appendColumn(column);
@@ -181,7 +212,7 @@ public class HexViewer {
             try {
                 file = dialog.openFinish(result);
             } catch (GErrorException ignored) {
-            } // used clicked cancel
+            } 
             if (file == null) {
                 return;
             }
