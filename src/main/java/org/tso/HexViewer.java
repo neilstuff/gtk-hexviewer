@@ -21,9 +21,13 @@ import org.gnome.gtk.GtkBuilder;
 import org.gnome.gtk.Inscription;
 import org.gnome.gtk.Label;
 import org.gnome.gtk.ListItem;
-import org.gnome.gtk.NoSelection;
 import org.gnome.gtk.ProgressBar;
+import org.gnome.gtk.SelectionModel;
 import org.gnome.gtk.SignalListItemFactory;
+import org.gnome.gtk.SingleSelection;
+import org.gnome.gtk.TextBuffer;
+import org.gnome.gtk.TextIter;
+import org.gnome.gtk.TextView;
 import org.gnome.gtk.Window;
 import org.tso.util.GuiUtils;
 
@@ -40,7 +44,8 @@ public class HexViewer {
     AboutDialog aboutDialog;
     Label statusBar;
     ProgressBar progressBar;
-    
+    TextView rowView;
+
     Load load = null;
 
     public static final class Row extends GObject {
@@ -65,19 +70,20 @@ public class HexViewer {
     }
 
     class Load implements Runnable {
-        ListStore<Row> store;
+
         File file;
-    
+        ListStore<Row> store;
+
         Load(File file) {
-            
+
             this.file = file;
             this.store = new ListStore<>(Row.gtype);
-   
+
         }
-        
+
         void createRows(ListStore<Row> store, byte[] bytes) throws Exception {
             var row = new byte[16];
-            
+
             this.store = new ListStore<>(Row.gtype);
             ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
             int read;
@@ -93,13 +99,13 @@ public class HexViewer {
                 line += row.length;
 
             }
-            
+
         }
 
         @Override
         public void run() {
             try {
-        
+
                 Out<byte[]> contents = new Out<>();
                 this.file.loadContents(null, contents, null);
 
@@ -108,14 +114,10 @@ public class HexViewer {
                 createRows(this.store, bytes);
 
             } catch (Exception e) {
-               e.printStackTrace();
+                e.printStackTrace();
             }
         }
 
-    }
-
-    void about() {
-       aboutDialog.show();
     }
 
     void setupColumns(ColumnView columnview) {
@@ -158,7 +160,7 @@ public class HexViewer {
             });
 
             final int hexColumn = iColumn;
-            
+
             columnFactory.onBind(item -> {
                 var listitem = (ListItem) item;
                 var inscription = (Inscription) listitem.getChild();
@@ -196,27 +198,32 @@ public class HexViewer {
         });
 
         column = new ColumnViewColumn("", columnFactory);
-        
+
         column.setExpand(true);
 
         columnview.appendColumn(column);
 
+
+    }
+
+    void about() {
+        aboutDialog.show();
     }
 
     void open() {
         FileDialog dialog = new FileDialog();
-        
+
         dialog.open(this.window, null, (_, result, _) -> {
             File file = null;
 
             try {
                 file = dialog.openFinish(result);
             } catch (GErrorException ignored) {
-            } 
+            }
             if (file == null) {
                 return;
             }
-        
+
             // Load the contents of the selected file.
             try {
                 Path path = Paths.get(file.getPath());
@@ -227,22 +234,32 @@ public class HexViewer {
 
                 Thread loader = new Thread(load);
                 loader.start();
-                
-                progressBar.setVisible(true);     
-                progressBar.setFraction(0);  
+
+                progressBar.setVisible(true);
+                progressBar.setFraction(0);
 
                 GLib.timeoutAdd(GLib.PRIORITY_DEFAULT, 100, () -> {
 
                     if (!loader.isAlive()) {
-                         columnView.setModel(new NoSelection<Row>(load.store));
-                         progressBar.setVisible(false);
+                        columnView.setModel(new SingleSelection<Row>(load.store));
+                        showRow(load.store, 0);
+
+                        ((SingleSelection<?>) (columnView.getModel())).onSelectionChanged(new SelectionModel.SelectionChangedCallback() {
+                            @Override
+                            public void run(int position, int nItems) {
+                              showRow(load.store, ((SingleSelection<?>) (columnView.getModel())).getSelected());
+                            }
+
+                        });
+
+                        progressBar.setVisible(false);
                     } else {
                         progressBar.pulse();
                     }
 
                     return loader.isAlive();
 
-            });
+                });
 
             } catch (Exception e) {
                 AlertDialog.builder()
@@ -258,6 +275,40 @@ public class HexViewer {
         });
     }
 
+        
+    void showRow(ListStore<Row> store, int index) {
+
+        rowView.setMonospace(true);
+        TextBuffer buffer = new TextBuffer();
+        TextIter iter = new TextIter();
+        buffer.getStartIter(iter);
+
+
+        Row row = store.get(index);
+
+        String definition = "<span weight=\"heavy\" size=\"medium\">Address: </span>" + row.address + "\n\n";
+        String hexValues = "    |  ";
+        String asciiValues = "    |   ";
+
+        for (int iHex = 0; iHex < row.hexValues.length; iHex++) {
+   
+            if (iHex < row.asciiValues.length()) {
+                hexValues += row.hexValues[iHex] + " |  ";
+
+                asciiValues += row.asciiValues.substring(iHex, iHex + 1) + " |   ";
+            } else {
+                asciiValues += "  |   ";
+                hexValues += "   |  ";
+            }
+        }
+        
+        definition += hexValues + "\n";
+        definition += asciiValues;
+        
+        buffer.insertMarkup(iter, definition, -1);
+        rowView.setBuffer(buffer);
+    }
+    
     public void activate(Application app) {
         GtkBuilder builder = new GtkBuilder();
 
@@ -270,6 +321,7 @@ public class HexViewer {
 
             statusBar = (Label) builder.getObject("statusBar");
             progressBar = (ProgressBar) builder.getObject("progressBar");
+            rowView = (TextView) builder.getObject("rowView");
 
             var openToolbarButton = (Button) builder.getObject("openToolbarButton");
             var aboutToolbarItem = (Button) builder.getObject("aboutToolbarItem");
@@ -289,7 +341,7 @@ public class HexViewer {
             window.setApplication(app);
 
             window.setVisible(true);
-                
+
         } catch (Exception e) {
 
             e.printStackTrace();

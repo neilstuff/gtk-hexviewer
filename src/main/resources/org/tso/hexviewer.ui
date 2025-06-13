@@ -81,7 +81,7 @@
             <property name="min_content_height">100</property>
             <property name="max_content_height">100</property>
             <child>
-              <object class="GtkTextView" id="attributeRow">
+              <object class="GtkTextView" id="rowView">
                 <property name="editable">false</property>
                 <property name="left_margin">10</property>
                 <property name="right_margin">10</property>
