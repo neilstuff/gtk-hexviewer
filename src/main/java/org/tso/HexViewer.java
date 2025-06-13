@@ -275,6 +275,13 @@ public class HexViewer {
         });
     }
 
+    String hexToOctal(String hex) {
+        int decimalValue = Integer.parseInt(hex, 16);
+        var octalValue =  Integer.toOctalString(decimalValue);
+
+        return String.format("%3s", octalValue).replace(' ', '0');
+
+    }
         
     void showRow(ListStore<Row> store, int index) {
 
@@ -283,25 +290,28 @@ public class HexViewer {
         TextIter iter = new TextIter();
         buffer.getStartIter(iter);
 
-
         Row row = store.get(index);
 
         String definition = "<span weight=\"heavy\" size=\"medium\">Address: </span>" + row.address + "\n\n";
-        String hexValues = "    |  ";
-        String asciiValues = "    |   ";
+        String hexValues  = "    Octal |  ";
+        String asciiValues = "    Hex   |   ";
+        String octalValues = "    Ascii | ";
 
         for (int iHex = 0; iHex < row.hexValues.length; iHex++) {
    
             if (iHex < row.asciiValues.length()) {
                 hexValues += row.hexValues[iHex] + " |  ";
+                octalValues += hexToOctal(row.hexValues[iHex]) + " | ";
 
                 asciiValues += row.asciiValues.substring(iHex, iHex + 1) + " |   ";
             } else {
                 asciiValues += "  |   ";
                 hexValues += "   |  ";
+                octalValues += "    | ";
             }
         }
         
+        definition += octalValues  + "\n";
         definition += hexValues + "\n";
         definition += asciiValues;
         
