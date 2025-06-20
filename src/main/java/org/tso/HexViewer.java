@@ -241,6 +241,12 @@ public class HexViewer {
                 GLib.timeoutAdd(GLib.PRIORITY_DEFAULT, 100, () -> {
 
                     if (!loader.isAlive()) {
+                        try {
+                            loader.join();
+                        } catch (Exception e) {
+
+                        }
+
                         columnView.setModel(new SingleSelection<Row>(load.store));
                         showRow(load.store, 0);
 
